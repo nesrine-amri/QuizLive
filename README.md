@@ -17,8 +17,8 @@ Media and advertising companies want to know, in real time, how many people are 
 - The platform "watches" and "listens" to the live broadcast continuously.
 - AI decodes what is happening on screen and in the audio right now.
 - Within seconds, it generates a multiple-choice question about the current moment of the show and pushes it live to every connected viewer.
-- Viewers answer anonymously from their phone (no camera, no microphone, no personal identifiers) and earn points redeemable for partner rewards.
-- The media/advertising company gets aggregated, real-time engagement analytics (audience size, answer distribution, attention over time) — real signal for advertisers, with zero individual viewer data ever leaving the anonymous play session.
+- Viewers answer from their phone through a lightweight account (email/password) used only to track their own points and rewards — no camera, no microphone, no viewing-habits tracking of any kind.
+- The media/advertising company gets aggregated, real-time engagement analytics (audience size, answer distribution, attention over time) — real signal for advertisers, without ever exposing which individual viewer answered what.
 
 AI is present at every single step of the pipeline:
 
@@ -132,7 +132,7 @@ Drop a sample video at `videos/fsf_ep36.mp4` to test the pipeline offline, or se
 
 ### 7. Privacy by design
 
-Viewers play under an anonymous session — no camera, no microphone, no biometric or identity data is ever captured from the audience. Everything the broadcaster/advertiser sees is aggregated (counts, distributions, trends), never tied to an individual viewer.
+Playing only requires a lightweight account (email/password) to track points and rewards — QuizLive never turns on a viewer's camera or microphone, and never profiles their viewing habits. The AI pipeline only reads the broadcast itself (the show), not the audience. Everything the broadcaster/advertiser sees is aggregated (counts, distributions, trends); no individual viewer's identity or answers are ever exposed to them.
 
 ---
 
@@ -147,8 +147,8 @@ Les entreprises média et les annonceurs veulent savoir, en temps réel, combien
 - La plateforme « regarde » et « écoute » en continu le direct.
 - L'IA décode ce qui se passe à l'écran et à l'oral, à l'instant même.
 - En quelques secondes, elle génère une question à choix multiples sur le moment présent de l'émission et la diffuse en direct à tous les spectateurs connectés.
-- Les spectateurs répondent de façon anonyme depuis leur téléphone (pas de caméra, pas de micro, aucune donnée personnelle) et gagnent des points échangeables contre des récompenses partenaires.
-- L'entreprise média/annonceur obtient des statistiques d'engagement agrégées en temps réel (taille d'audience, répartition des réponses, courbe d'attention) — un vrai signal business pour les annonceurs, sans jamais exposer la moindre donnée individuelle du spectateur.
+- Les spectateurs répondent depuis leur téléphone via un compte léger (email/mot de passe) utilisé uniquement pour suivre leurs propres points et récompenses — pas de caméra, pas de micro, aucun suivi des habitudes de visionnage.
+- L'entreprise média/annonceur obtient des statistiques d'engagement agrégées en temps réel (taille d'audience, répartition des réponses, courbe d'attention) — un vrai signal business pour les annonceurs, sans jamais savoir quel spectateur a répondu quoi.
 
 L'IA est omniprésente à chaque étape du pipeline :
 
@@ -262,7 +262,7 @@ Placez une vidéo d'exemple dans `videos/fsf_ep36.mp4` pour tester le pipeline h
 
 ### 7. Confidentialité par conception
 
-Les spectateurs jouent via une session anonyme — aucune caméra, aucun micro, aucune donnée biométrique ou d'identité n'est jamais captée côté audience. Tout ce que voit la chaîne/l'annonceur est agrégé (comptages, répartitions, tendances), jamais rattaché à un spectateur individuel.
+Jouer ne demande qu'un compte léger (email/mot de passe) pour suivre les points et récompenses — QuizLive n'active jamais la caméra ou le micro d'un spectateur, et ne profile jamais ses habitudes de visionnage. Le pipeline IA ne lit que l'émission diffusée, jamais l'audience. Tout ce que voit la chaîne/l'annonceur est agrégé (comptages, répartitions, tendances) ; l'identité ou les réponses d'un spectateur ne lui sont jamais exposées.
 
 ---
 
