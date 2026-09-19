@@ -274,7 +274,7 @@ Built by a 3-person team during the hackathon:
 |---|---|
 | [Nesrine Amri](https://github.com/nesrine-amri) | AI/ML pipeline — live audio capture, Whisper transcription, Groq quiz generation, YOLOv8/OCR computer-vision prototypes (`api/`, `agent/`, `cv-worker/`) |
 | [Aabchoun](https://github.com/Aabchoun) | DABLyou platform — NestJS backend & Flutter mobile app |
-| Mariem | DABLyou platform — NestJS backend & Flutter mobile app |
+| [Mariem](https://github.com/mariem100103) | DABLyou platform — NestJS backend & Flutter mobile app |
 
 Équipe de 3 personnes pendant le hackathon :
 
@@ -282,7 +282,7 @@ Built by a 3-person team during the hackathon:
 |---|---|
 | [Nesrine Amri](https://github.com/nesrine-amri) | Pipeline IA/ML — capture audio live, transcription Whisper, génération de quiz via Groq, prototypes computer-vision YOLOv8/OCR (`api/`, `agent/`, `cv-worker/`) |
 | [Aabchoun](https://github.com/Aabchoun) | Plateforme DABLyou — backend NestJS & application Flutter |
-| Mariem | Plateforme DABLyou — backend NestJS & application Flutter |
+| [Mariem](https://github.com/mariem100103) | Plateforme DABLyou — backend NestJS & application Flutter |
 
 ---
 
