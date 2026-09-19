@@ -1,0 +1,33 @@
+# Secrets & local environment
+.env
+
+# Python
+__pycache__/
+*.py[cod]
+venv/
+.venv/
+
+# Pretrained model weights (auto-downloaded by ultralytics on first run)
+/yolov8n.pt
+
+# Generated media / debug artifacts (regenerate locally, not versioned)
+videos/*.mp4
+videos/*.wav
+videos/frame_*.jpg
+
+# Node / NestJS
+node_modules/
+DABLyou/backend/dist/
+DABLyou/backend/generated/
+
+# Flutter / Dart
+DABLyou/mobile/build/
+DABLyou/mobile/.dart_tool/
+DABLyou/mobile/.flutter-plugins
+DABLyou/mobile/.flutter-plugins-dependencies
+*.iml
+.idea/
+
+# OS / editor
+.DS_Store
+.vscode/
