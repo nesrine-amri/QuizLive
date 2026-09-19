@@ -1,0 +1,218 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum MediaType {
+  TV
+  RADIO
+}
+
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
+}
+
+enum QuestionSource {
+  AI
+  HUMAN
+  SPONSORED
+}
+
+enum CouponStatus {
+  AVAILABLE
+  USED
+  EXPIRED
+}
+
+model User {
+  id           String   @id @default(uuid())
+  firstName    String
+  lastName     String
+  email        String   @unique
+  passwordHash String
+  gender       Gender
+  birthDate    DateTime
+  city         String?  // Tunisian city — used for advertiser analytics
+  createdAt    DateTime @default(now())
+  lastLoginAt  DateTime?
+  totalPoints  Int      @default(0)
+
+  answers          Answer[]
+  pointEvents      PointEvent[]
+  coupons          Coupon[]
+  mediaSelections  MediaSelection[]
+
+  @@index([createdAt])
+  @@index([city])
+}
+
+model Media {
+  id         String    @id
+  name       String
+  type       MediaType
+  logoUrl    String?
+  youtubeUrl String?   // YouTube live stream URL — resolved to HLS by yt-dlp in FastAPI
+  isActive   Boolean   @default(true)
+  popularity Int       @default(0)
+  createdAt  DateTime  @default(now())
+
+  questions       Question[]
+  campaigns       Campaign[]
+  mediaSelections MediaSelection[]
+
+  @@index([type, isActive, popularity])
+}
+
+model MediaSelection {
+  id        String   @id @default(uuid())
+  userId    String
+  mediaId   String
+  createdAt DateTime @default(now())
+
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  media Media @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@index([mediaId, createdAt])
+}
+
+model Campaign {
+  id           String   @id @default(uuid())
+  partnerId    String
+  mediaId      String
+  campaignType String
+  startDate    DateTime
+  endDate      DateTime
+  secretWord   String?
+  status       String
+  createdAt    DateTime @default(now())
+
+  partner  Partner  @relation(fields: [partnerId], references: [id], onDelete: Cascade)
+  media    Media    @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+  questions Question[]
+
+  @@index([mediaId, startDate, endDate])
+  @@index([partnerId])
+}
+
+model Question {
+  id            String         @id @default(uuid())
+  mediaId       String
+  mediaType     MediaType
+  questionText  String
+  options       String[]
+  correctAnswer String
+  questionType  String
+  points        Int            @default(10)
+  validFrom     DateTime
+  validUntil    DateTime
+  source        QuestionSource @default(AI)
+  campaignId    String?
+  createdAt     DateTime       @default(now())
+
+  media     Media      @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+  campaign  Campaign?  @relation(fields: [campaignId], references: [id], onDelete: SetNull)
+  answers   Answer[]
+
+  @@index([mediaId, validFrom, validUntil])
+  @@index([campaignId])
+}
+
+model Answer {
+  id             String   @id @default(uuid())
+  userId         String
+  questionId     String
+  selectedAnswer String
+  isCorrect      Boolean
+  responseTimeMs Int
+  pointsAwarded  Int      @default(0)
+  // ── Analytics fields (sold to advertisers) ──────────────────────────────
+  city           String?  // copied from user.city at answer time
+  deviceOs       String?  // "android" | "ios" | "web" — sent by Flutter
+  createdAt      DateTime @default(now())
+
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  question Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  pointEvents PointEvent[]
+
+  @@unique([userId, questionId])
+  @@index([createdAt])
+  @@index([city])
+  @@index([deviceOs])
+}
+
+model PointEvent {
+  id        String   @id @default(uuid())
+  userId    String
+  delta     Int
+  reason    String
+  answerId  String?
+  couponId  String?
+  createdAt DateTime @default(now())
+
+  user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  answer Answer? @relation(fields: [answerId], references: [id], onDelete: SetNull)
+  coupon Coupon? @relation(fields: [couponId], references: [id], onDelete: SetNull)
+
+  @@index([userId, createdAt])
+}
+
+model Partner {
+  id           String   @id
+  name         String
+  logoUrl      String?
+  category     String?
+  contactEmail String?
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+
+  rewards   Reward[]
+  campaigns Campaign[]
+}
+
+model Reward {
+  id             String   @id
+  partnerId      String
+  title          String
+  description    String?
+  requiredPoints Int      @default(1000)
+  discountValue  Int      @default(15)
+  expiresInDays  Int      @default(30)
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+
+  partner Partner @relation(fields: [partnerId], references: [id], onDelete: Cascade)
+  coupons Coupon[]
+
+  @@index([partnerId, isActive])
+}
+
+model Coupon {
+  id        String       @id @default(uuid())
+  userId    String
+  rewardId  String
+  code      String       @unique
+  status    CouponStatus @default(AVAILABLE)
+  createdAt DateTime     @default(now())
+  usedAt    DateTime?
+  expiresAt DateTime
+
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  reward      Reward       @relation(fields: [rewardId], references: [id], onDelete: Cascade)
+  pointEvents PointEvent[]
+
+  @@index([userId, createdAt])
+  @@index([status, expiresAt])
+}

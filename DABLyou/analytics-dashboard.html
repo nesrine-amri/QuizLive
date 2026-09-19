@@ -1,0 +1,999 @@
+<!DOCTYPE html>
+<html lang="fr" dir="ltr">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>QuizLive Tunisia — Tableau de Bord Audience</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  :root {
+    --bg:       #07080f;
+    --surface:  #0f1220;
+    --card:     #141828;
+    --border:   #1e2440;
+    --purple:   #6c3cff;
+    --purple2:  #9c6dff;
+    --green:    #22d37a;
+    --amber:    #f5a623;
+    --red:      #ff4d6d;
+    --cyan:     #00d4ff;
+    --text:     #f0f2ff;
+    --muted:    #7b82a8;
+    --font:     'Segoe UI', system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ── HEADER ── */
+  .header {
+    background: linear-gradient(135deg, #0c0e1a 0%, #12152b 100%);
+    border-bottom: 1px solid var(--border);
+    padding: 18px 32px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .header-left { display: flex; align-items: center; gap: 16px; }
+  .logo {
+    width: 44px; height: 44px; border-radius: 14px;
+    background: linear-gradient(135deg, var(--purple), var(--purple2));
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px; font-weight: 900; color: #fff;
+  }
+  .header-title h1 { font-size: 18px; font-weight: 800; letter-spacing: -0.3px; }
+  .header-title p  { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .header-right { display: flex; align-items: center; gap: 20px; }
+  .live-badge {
+    display: flex; align-items: center; gap: 7px;
+    background: rgba(34,211,122,.1); border: 1px solid rgba(34,211,122,.25);
+    border-radius: 999px; padding: 6px 14px;
+    font-size: 12px; font-weight: 700; color: var(--green);
+  }
+  .live-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--green);
+    animation: pulse 1.5s infinite;
+  }
+  @keyframes pulse {
+    0%,100% { opacity: 1; transform: scale(1); }
+    50%      { opacity: 0.4; transform: scale(0.8); }
+  }
+  .refresh-info { font-size: 12px; color: var(--muted); text-align: right; }
+  .refresh-info span { color: var(--purple2); font-weight: 700; }
+
+  /* ── LAYOUT ── */
+  .page { padding: 28px 32px; max-width: 1600px; margin: 0 auto; }
+  .section-title {
+    font-size: 11px; font-weight: 700; letter-spacing: 1.5px;
+    text-transform: uppercase; color: var(--muted);
+    margin-bottom: 14px; margin-top: 30px;
+    padding-bottom: 8px; border-bottom: 1px solid var(--border);
+  }
+
+  /* ── KPI CARDS ── */
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 14px;
+    margin-bottom: 8px;
+  }
+  .kpi-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 18px 20px;
+    position: relative;
+    overflow: hidden;
+    transition: border-color .2s;
+  }
+  .kpi-card:hover { border-color: var(--purple); }
+  .kpi-card::before {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0; height: 2px;
+    background: var(--accent, var(--purple));
+  }
+  .kpi-icon {
+    width: 36px; height: 36px; border-radius: 10px;
+    background: rgba(108,60,255,.12);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px; margin-bottom: 12px;
+  }
+  .kpi-value { font-size: 26px; font-weight: 900; letter-spacing: -1px; line-height: 1; }
+  .kpi-label { font-size: 11px; color: var(--muted); margin-top: 6px; font-weight: 600; }
+  .kpi-sub   { font-size: 11px; color: var(--green); margin-top: 4px; font-weight: 700; }
+
+  /* ── GRID LAYOUTS ── */
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 18px; }
+  .grid-3-1 { display: grid; grid-template-columns: 2fr 1fr; gap: 18px; }
+  .grid-1-2 { display: grid; grid-template-columns: 1fr 2fr; gap: 18px; }
+
+  /* ── CHART CARDS ── */
+  .chart-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 22px 24px;
+  }
+  .chart-card-header {
+    display: flex; align-items: flex-start; justify-content: space-between;
+    margin-bottom: 18px;
+  }
+  .chart-card-title { font-size: 14px; font-weight: 800; }
+  .chart-card-sub   { font-size: 11px; color: var(--muted); margin-top: 3px; }
+  .chart-badge {
+    font-size: 10px; font-weight: 700; padding: 4px 10px;
+    border-radius: 999px; white-space: nowrap;
+  }
+  .badge-purple { background: rgba(108,60,255,.15); color: var(--purple2); border: 1px solid rgba(108,60,255,.2); }
+  .badge-green  { background: rgba(34,211,122,.1);  color: var(--green);   border: 1px solid rgba(34,211,122,.2); }
+  .badge-amber  { background: rgba(245,166,35,.1);  color: var(--amber);   border: 1px solid rgba(245,166,35,.2); }
+
+  /* ── HEATMAP ── */
+  .heatmap-wrap { overflow-x: auto; }
+  .heatmap {
+    display: grid;
+    grid-template-columns: 70px repeat(24, 1fr);
+    gap: 3px;
+    min-width: 820px;
+  }
+  .hm-header { font-size: 9px; color: var(--muted); text-align: center; padding: 3px 0; font-weight: 700; }
+  .hm-label  { font-size: 10px; color: var(--muted); display: flex; align-items: center; font-weight: 600; }
+  .hm-cell {
+    height: 28px; border-radius: 5px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 9px; font-weight: 700; color: rgba(255,255,255,.8);
+    cursor: default; transition: transform .1s;
+    position: relative;
+  }
+  .hm-cell:hover { transform: scale(1.15); z-index: 10; }
+  .hm-cell[title]:hover::after {
+    content: attr(title);
+    position: absolute; bottom: 110%; left: 50%; transform: translateX(-50%);
+    background: #1e2440; color: #fff; border-radius: 6px;
+    padding: 4px 8px; font-size: 10px; white-space: nowrap; pointer-events: none;
+    border: 1px solid var(--border);
+  }
+
+  /* ── AD SCORE TABLE ── */
+  .ad-score-table { width: 100%; border-collapse: collapse; }
+  .ad-score-table th {
+    font-size: 10px; font-weight: 700; color: var(--muted);
+    text-transform: uppercase; letter-spacing: 1px;
+    padding: 8px 10px; border-bottom: 1px solid var(--border);
+    text-align: left;
+  }
+  .ad-score-table td {
+    padding: 10px 10px; font-size: 12px;
+    border-bottom: 1px solid rgba(30,36,64,.5);
+  }
+  .ad-score-table tr:hover td { background: rgba(108,60,255,.05); }
+  .score-bar-wrap { display: flex; align-items: center; gap: 8px; }
+  .score-bar {
+    height: 6px; border-radius: 999px;
+    background: linear-gradient(90deg, var(--purple), var(--cyan));
+    transition: width .4s;
+  }
+  .score-bar-bg { flex: 1; background: var(--border); border-radius: 999px; height: 6px; overflow: hidden; }
+
+  /* ── CHANNEL CARDS ── */
+  .channel-list { display: flex; flex-direction: column; gap: 10px; }
+  .channel-item {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 14px 16px;
+    display: flex; align-items: center; gap: 14px;
+  }
+  .channel-icon {
+    width: 38px; height: 38px; border-radius: 10px;
+    background: linear-gradient(135deg, var(--purple), #3d1adb);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: 900; color: #fff; flex-shrink: 0;
+  }
+  .channel-info { flex: 1; min-width: 0; }
+  .channel-name { font-size: 13px; font-weight: 800; }
+  .channel-meta { font-size: 10px; color: var(--muted); margin-top: 3px; }
+  .channel-stats { display: flex; gap: 10px; align-items: center; }
+  .channel-stat  { font-size: 11px; font-weight: 700; text-align: center; }
+  .channel-stat small { display: block; font-size: 9px; color: var(--muted); font-weight: 400; }
+  .gender-bar { width: 80px; height: 6px; border-radius: 999px; overflow: hidden; background: var(--border); }
+  .gender-fill { height: 100%; background: linear-gradient(90deg, var(--purple), var(--cyan)); border-radius: 999px; }
+
+  /* ── GEO BUBBLES ── */
+  .geo-container {
+    position: relative; width: 100%; padding-bottom: 130%;
+    overflow: hidden; background: linear-gradient(160deg, #0c1030 0%, #070918 100%);
+    border-radius: 12px;
+  }
+  .geo-inner { position: absolute; inset: 0; }
+  .geo-bubble {
+    position: absolute; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    flex-direction: column; cursor: default;
+    transition: transform .2s;
+    border: 1px solid rgba(108,60,255,.3);
+    background: radial-gradient(circle at 35% 35%, rgba(108,60,255,.5), rgba(108,60,255,.15));
+  }
+  .geo-bubble:hover { transform: scale(1.15); z-index: 10; }
+  .geo-bubble span { font-size: 9px; font-weight: 800; color: #fff; text-align: center; line-height: 1.1; }
+  .geo-bubble small { font-size: 8px; color: rgba(255,255,255,.6); }
+  .geo-title {
+    position: absolute; top: 10px; left: 10px;
+    font-size: 9px; font-weight: 700; color: var(--muted);
+    text-transform: uppercase; letter-spacing: 1px;
+  }
+
+  /* ── PIE LEGEND ── */
+  .pie-legend { display: flex; flex-direction: column; gap: 8px; margin-top: 14px; }
+  .pie-legend-item { display: flex; align-items: center; gap: 8px; }
+  .pie-dot { width: 10px; height: 10px; border-radius: 3px; flex-shrink: 0; }
+  .pie-legend-label { font-size: 12px; color: var(--muted); flex: 1; }
+  .pie-legend-val   { font-size: 12px; font-weight: 700; }
+
+  /* ── RECOMMENDATION BOX ── */
+  .reco-box {
+    background: linear-gradient(135deg, rgba(108,60,255,.12), rgba(0,212,255,.06));
+    border: 1px solid rgba(108,60,255,.25);
+    border-radius: 14px; padding: 18px 20px;
+    margin-top: 18px;
+  }
+  .reco-title { font-size: 13px; font-weight: 800; color: var(--purple2); margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
+  .reco-item  { font-size: 12px; color: var(--text); margin-bottom: 6px; padding-left: 16px; position: relative; }
+  .reco-item::before { content: '→'; position: absolute; left: 0; color: var(--cyan); font-weight: 700; }
+
+  /* ── LOADING ── */
+  .loading {
+    display: flex; align-items: center; justify-content: center;
+    height: 120px; color: var(--muted); font-size: 13px; gap: 10px;
+  }
+  .spinner {
+    width: 20px; height: 20px; border: 2px solid var(--border);
+    border-top-color: var(--purple); border-radius: 50%;
+    animation: spin .7s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 1200px) {
+    .kpi-grid { grid-template-columns: repeat(3, 1fr); }
+    .grid-3   { grid-template-columns: 1fr 1fr; }
+  }
+  @media (max-width: 768px) {
+    .page { padding: 16px; }
+    .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+    .grid-2, .grid-3-1, .grid-1-2 { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════ HEADER ══════════════════════════════════ -->
+<div class="header">
+  <div class="header-left">
+    <div class="logo">Q</div>
+    <div class="header-title">
+      <h1>QuizLive Tunisia — Audience Intelligence</h1>
+      <p>Powered by engagement data from live TV & Radio quiz interactions</p>
+    </div>
+  </div>
+  <div class="header-right">
+    <div class="live-badge"><div class="live-dot"></div>LIVE DATA</div>
+    <div class="refresh-info">
+      Actualisation dans <span id="countdown">30</span>s<br>
+      <span id="last-refresh" style="color:var(--muted)">—</span>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════ PAGE ════════════════════════════════════ -->
+<div class="page">
+
+  <!-- KPI ROW -->
+  <div class="section-title">Vue d'ensemble — Aujourd'hui</div>
+  <div class="kpi-grid">
+    <div class="kpi-card" style="--accent:var(--green)">
+      <div class="kpi-icon" style="background:rgba(34,211,122,.12)">👥</div>
+      <div class="kpi-value" id="kpi-active">—</div>
+      <div class="kpi-label">Spectateurs actifs aujourd'hui</div>
+      <div class="kpi-sub" id="kpi-total-users">— inscrits total</div>
+    </div>
+    <div class="kpi-card" style="--accent:var(--purple)">
+      <div class="kpi-icon">📊</div>
+      <div class="kpi-value" id="kpi-answers">—</div>
+      <div class="kpi-label">Réponses aujourd'hui</div>
+      <div class="kpi-sub" id="kpi-questions">— questions diffusées</div>
+    </div>
+    <div class="kpi-card" style="--accent:var(--cyan)">
+      <div class="kpi-icon" style="background:rgba(0,212,255,.1)">🎯</div>
+      <div class="kpi-value" id="kpi-engagement">—</div>
+      <div class="kpi-label">Taux d'engagement</div>
+      <div class="kpi-sub">Ratio actifs / inscrits</div>
+    </div>
+    <div class="kpi-card" style="--accent:var(--amber)">
+      <div class="kpi-icon" style="background:rgba(245,166,35,.1)">✅</div>
+      <div class="kpi-value" id="kpi-correct">—</div>
+      <div class="kpi-label">Taux de bonne réponse</div>
+      <div class="kpi-sub" id="kpi-avgms">Temps moyen: — ms</div>
+    </div>
+    <div class="kpi-card" style="--accent:#ff4d6d">
+      <div class="kpi-icon" style="background:rgba(255,77,109,.1)">⭐</div>
+      <div class="kpi-value" id="kpi-points">—</div>
+      <div class="kpi-label">Points distribués</div>
+      <div class="kpi-sub" id="kpi-coupons">— bons de réduction générés</div>
+    </div>
+    <div class="kpi-card" style="--accent:var(--purple2)">
+      <div class="kpi-icon">⏱</div>
+      <div class="kpi-value" id="kpi-bestslot">—</div>
+      <div class="kpi-label">Meilleur créneau pub</div>
+      <div class="kpi-sub" id="kpi-bestslot-score">Score d'audience max</div>
+    </div>
+  </div>
+
+  <!-- PRIME TIME HEATMAP — CORE ADVERTISER TOOL -->
+  <div class="section-title">Analyse Audience par Tranche Horaire — Quand passer votre spot ?</div>
+  <div class="chart-card">
+    <div class="chart-card-header">
+      <div>
+        <div class="chart-card-title">🔥 Matrice Âge × Heure de Diffusion</div>
+        <div class="chart-card-sub">Intensité = nombre de spectateurs engagés. Plus la cellule est claire, plus l'audience est forte sur ce segment d'âge à cette heure.</div>
+      </div>
+      <span class="chart-badge badge-purple">Outil Achat Espace</span>
+    </div>
+    <div class="heatmap-wrap" id="heatmap-wrap">
+      <div class="loading"><div class="spinner"></div>Chargement de la matrice…</div>
+    </div>
+    <!-- Ad placement recommendations injected here -->
+    <div id="reco-box"></div>
+  </div>
+
+  <!-- ROW: AD SCORE TABLE + GEO MAP -->
+  <div class="grid-3-1" style="margin-top:18px">
+
+    <div class="chart-card">
+      <div class="chart-card-header">
+        <div>
+          <div class="chart-card-title">📈 Score Valeur Pub par Heure</div>
+          <div class="chart-card-sub">Score composite = Volume × Engagement. Indique les créneaux les plus rentables pour un achat d'espace.</div>
+        </div>
+        <span class="chart-badge badge-amber">ROI Annonceur</span>
+      </div>
+      <div id="ad-score-table-wrap">
+        <div class="loading"><div class="spinner"></div></div>
+      </div>
+    </div>
+
+    <div class="chart-card">
+      <div class="chart-card-header">
+        <div>
+          <div class="chart-card-title">🗺 Distribution Géographique</div>
+          <div class="chart-card-sub">Répartition des spectateurs par gouvernorat tunisien.</div>
+        </div>
+        <span class="chart-badge badge-green">Géo-ciblage</span>
+      </div>
+      <div id="geo-map" style="height:320px;position:relative;background:linear-gradient(160deg,#0c1030,#070918);border-radius:10px;overflow:hidden">
+        <div class="loading"><div class="spinner"></div></div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ROW: CHANNEL DEMOGRAPHICS — PER CHANNEL AUDIENCE PROFILE -->
+  <div class="section-title">Profil Audience par Chaîne — Qui regarde quoi ?</div>
+  <div class="grid-2">
+
+    <div class="chart-card">
+      <div class="chart-card-header">
+        <div>
+          <div class="chart-card-title">📺 Profil démographique par chaîne</div>
+          <div class="chart-card-sub">Âge dominant, répartition H/F et volume d'engagement par chaîne.</div>
+        </div>
+        <span class="chart-badge badge-purple">Media Planning</span>
+      </div>
+      <div class="channel-list" id="channel-demo-list">
+        <div class="loading"><div class="spinner"></div></div>
+      </div>
+    </div>
+
+    <div class="chart-card">
+      <div class="chart-card-header">
+        <div>
+          <div class="chart-card-title">📊 Répartition d'âge par chaîne</div>
+          <div class="chart-card-sub">Comparatif des tranches d'âge engagées sur chaque canal.</div>
+        </div>
+        <span class="chart-badge badge-amber">Targeting</span>
+      </div>
+      <canvas id="channelAgeChart" height="280"></canvas>
+    </div>
+
+  </div>
+
+  <!-- ROW: DEMOGRAPHICS PIE CHARTS + DEVICE OS -->
+  <div class="section-title">Démographie & Équipement — Profil de l'audience globale</div>
+  <div class="grid-3">
+
+    <div class="chart-card">
+      <div class="chart-card-header">
+        <div>
+          <div class="chart-card-title">👤 Répartition par genre</div>
+          <div class="chart-card-sub">Audience globale enregistrée sur la plateforme.</div>
+        </div>
+      </div>
+      <div style="max-width:200px;margin:0 auto"><canvas id="genderChart"></canvas></div>
+      <div class="pie-legend" id="gender-legend"></div>
+    </div>
+
+    <div class="chart-card">
+      <div class="chart-card-header">
+        <div>
+          <div class="chart-card-title">🎂 Répartition par tranche d'âge</div>
+          <div class="chart-card-sub">Groupes d'âge — tous utilisateurs inscrits.</div>
+        </div>
+      </div>
+      <canvas id="ageChart" height="200"></canvas>
+    </div>
+
+    <div class="chart-card">
+      <div class="chart-card-header">
+        <div>
+          <div class="chart-card-title">📱 Système d'exploitation</div>
+          <div class="chart-card-sub">Plateforme utilisée pour répondre.</div>
+        </div>
+      </div>
+      <div style="max-width:200px;margin:0 auto"><canvas id="deviceChart"></canvas></div>
+      <div class="pie-legend" id="device-legend"></div>
+    </div>
+
+  </div>
+
+  <!-- ROW: 24H TIMELINE -->
+  <div class="section-title">Activité en Temps Réel — Dernières 24 heures</div>
+  <div class="chart-card">
+    <div class="chart-card-header">
+      <div>
+        <div class="chart-card-title">📉 Volume de réponses & taux de succès — 24h glissantes</div>
+        <div class="chart-card-sub">Identifiez les pics d'audience et les creux pour optimiser la programmation publicitaire.</div>
+      </div>
+      <span class="chart-badge badge-green">Temps réel</span>
+    </div>
+    <canvas id="timelineChart" height="110"></canvas>
+  </div>
+
+</div><!-- end .page -->
+
+<script>
+// ════════════════════════════════════════════════════════════════════════════
+// CONFIG
+// ════════════════════════════════════════════════════════════════════════════
+const API = 'http://localhost:3000/analytics';
+const REFRESH_S = 30;
+
+// Approximate Tunisia city positions (x%,y% on a 100×130 virtual canvas)
+const CITY_POS = {
+  'تونس':        { x:62, y:20 }, 'أريانة':     { x:60, y:18 },
+  'بنزرت':       { x:55, y: 9 }, 'نابل':       { x:71, y:27 },
+  'زغوان':       { x:60, y:31 }, 'سوسة':       { x:67, y:39 },
+  'المهدية':     { x:68, y:47 }, 'صفاقس':      { x:61, y:54 },
+  'القيروان':    { x:52, y:40 }, 'سيدي بوزيد': { x:44, y:50 },
+  'الكاف':       { x:29, y:23 }, 'باجة':       { x:28, y:17 },
+  'جندوبة':      { x:21, y:18 }, 'سليانة':     { x:37, y:31 },
+  'منوبة':       { x:58, y:20 }, 'قابس':       { x:61, y:65 },
+  'مدنين':       { x:65, y:76 }, 'تطاوين':     { x:57, y:86 },
+  'توزر':        { x:27, y:67 }, 'قبلي':       { x:39, y:73 },
+  'قفصة':        { x:32, y:58 },
+};
+
+const AGE_GROUPS = ['أقل من 18','18–24','25–34','35–44','45–54','55+'];
+const AGE_COLORS = ['#a78bfa','#6c3cff','#00d4ff','#22d37a','#f5a623','#ff4d6d'];
+const GENDER_COLORS = { MALE:'#6c3cff', FEMALE:'#ff4d6d', OTHER:'#22d37a' };
+const GENDER_LABELS = { MALE:'Hommes', FEMALE:'Femmes', OTHER:'Autre' };
+const OS_COLORS = { android:'#22d37a', ios:'#6c3cff', web:'#f5a623', unknown:'#7b82a8' };
+
+// ════════════════════════════════════════════════════════════════════════════
+// DEMO DATA — shown when backend is unreachable (hackathon fallback)
+// ════════════════════════════════════════════════════════════════════════════
+function demoOverview() {
+  return { totalAnswersToday:4872, correctAnswersToday:3191, correctRate:65.5,
+    pointsDistributedToday:38420, activeUsersToday:612, totalUsers:1840,
+    totalQuestionsToday:48, couponsRedeemed:23, engagementRate:33.3, avgResponseTimeMs:9400 };
+}
+function demoAudienceByHour() {
+  const peaks = {8:[30,80,120,60,20,10], 12:[15,60,110,80,40,20],
+    13:[20,70,130,90,45,25], 19:[60,140,200,160,90,50],
+    20:[80,180,260,200,120,70], 21:[70,160,240,180,100,60],
+    22:[50,100,160,130,70,40]};
+  return Array.from({length:24},(_,h)=>{
+    const base = peaks[h] || [2,5,8,6,3,1];
+    const groups = {};
+    AGE_GROUPS.forEach((g,i)=>groups[g]=base[i]||(Math.round(Math.random()*3)));
+    const tot = Object.values(groups).reduce((a,b)=>a+b,0);
+    const sc  = Math.round(40+Math.random()*55);
+    return {hour:h,label:`${String(h).padStart(2,'0')}:00`,totalViewers:tot,
+      engagementScore:sc,adValueScore:Math.round(tot*(sc/100)*10)/10,groups};
+  });
+}
+function demoDemographics() {
+  return {
+    gender:[{gender:'MALE',count:1020},{gender:'FEMALE',count:760},{gender:'OTHER',count:60}],
+    ageGroups:[
+      {group:'أقل من 18',count:95},{group:'18–24',count:340},
+      {group:'25–34',count:580},{group:'35–44',count:420},
+      {group:'45–54',count:260},{group:'55+',count:145}
+    ]
+  };
+}
+function demoDevices() {
+  return [{os:'android',count:1240,pct:67.4},{os:'ios',count:480,pct:26.1},
+          {os:'web',count:120,pct:6.5}];
+}
+function demoChannelDemographics() {
+  const channels = [
+    {mediaId:'elhiwar_tv',name:'El Hiwar Ettounsi',type:'TV',
+      ageGroups:{'أقل من 18':12,'18–24':90,'25–34':210,'35–44':170,'45–54':80,'55+':38},
+      gender:{MALE:240,FEMALE:360},totalAnswers:600,dominantAge:'25–34',malePct:40,femalePct:60},
+    {mediaId:'wataniya1_tv',name:'Watania 1',type:'TV',
+      ageGroups:{'أقل من 18':30,'18–24':60,'25–34':140,'35–44':200,'45–54':160,'55+':110},
+      gender:{MALE:420,FEMALE:280},totalAnswers:700,dominantAge:'35–44',malePct:60,femalePct:40},
+    {mediaId:'nessma_tv',name:'Nessma TV',type:'TV',
+      ageGroups:{'أقل من 18':20,'18–24':130,'25–34':180,'35–44':100,'45–54':40,'55+':15},
+      gender:{MALE:230,FEMALE:255},totalAnswers:485,dominantAge:'25–34',malePct:47,femalePct:53},
+    {mediaId:'mosaique_fm',name:'Mosaique FM',type:'RADIO',
+      ageGroups:{'أقل من 18':8,'18–24':180,'25–34':220,'35–44':130,'45–54':50,'55+':20},
+      gender:{MALE:340,FEMALE:268},totalAnswers:608,dominantAge:'25–34',malePct:56,femalePct:44},
+    {mediaId:'ifm',name:'IFM',type:'RADIO',
+      ageGroups:{'أقل من 18':5,'18–24':110,'25–34':160,'35–44':90,'45–54':30,'55+':10},
+      gender:{MALE:210,FEMALE:195},totalAnswers:405,dominantAge:'25–34',malePct:52,femalePct:48},
+  ];
+  return channels;
+}
+function demoGeo() {
+  return [
+    {city:'تونس',count:380,correctRate:68},{city:'صفاقس',count:210,correctRate:65},
+    {city:'سوسة',count:170,correctRate:70},{city:'القيروان',count:90,correctRate:62},
+    {city:'بنزرت',count:80,correctRate:66},{city:'أريانة',count:120,correctRate:71},
+    {city:'نابل',count:60,correctRate:64},{city:'قابس',count:55,correctRate:60},
+    {city:'سيدي بوزيد',count:40,correctRate:58},{city:'الكاف',count:35,correctRate:63},
+    {city:'منوبة',count:45,correctRate:67},{city:'جندوبة',count:28,correctRate:59},
+    {city:'مدنين',count:32,correctRate:61},{city:'قفصة',count:30,correctRate:60},
+  ];
+}
+function demoTimeline() {
+  const now = new Date(); now.setMinutes(0,0,0);
+  return Array.from({length:24},(_,i)=>{
+    const h = new Date(now.getTime() - (23-i)*3600000);
+    const peak = [20,21,19,22].includes(h.getHours());
+    const base = peak?180:30;
+    const ans = Math.round(base+Math.random()*80);
+    return {hour:h.toISOString(),answers:ans,correct:Math.round(ans*0.6)};
+  });
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+// FETCH HELPERS
+// ════════════════════════════════════════════════════════════════════════════
+async function api(path, fallback) {
+  try {
+    const r = await fetch(API+path, {signal:AbortSignal.timeout(4000)});
+    if(!r.ok) throw new Error(r.status);
+    return await r.json();
+  } catch { return fallback(); }
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+// CHART INSTANCES (kept for destruction on re-render)
+// ════════════════════════════════════════════════════════════════════════════
+const charts = {};
+function destroyChart(id) { if(charts[id]){ charts[id].destroy(); delete charts[id]; } }
+
+// ════════════════════════════════════════════════════════════════════════════
+// RENDER KPIs
+// ════════════════════════════════════════════════════════════════════════════
+function renderKPIs(d, hourly) {
+  document.getElementById('kpi-active').textContent    = d.activeUsersToday.toLocaleString();
+  document.getElementById('kpi-total-users').textContent = `${d.totalUsers.toLocaleString()} inscrits total`;
+  document.getElementById('kpi-answers').textContent   = d.totalAnswersToday.toLocaleString();
+  document.getElementById('kpi-questions').textContent = `${d.totalQuestionsToday} questions diffusées`;
+  document.getElementById('kpi-engagement').textContent= d.engagementRate+'%';
+  document.getElementById('kpi-correct').textContent   = d.correctRate+'%';
+  document.getElementById('kpi-avgms').textContent     = `Temps moyen: ${(d.avgResponseTimeMs/1000).toFixed(1)}s`;
+  document.getElementById('kpi-points').textContent    = d.pointsDistributedToday.toLocaleString();
+  document.getElementById('kpi-coupons').textContent   = `${d.couponsRedeemed} bons de réduction générés`;
+
+  // Best slot
+  if(hourly && hourly.length) {
+    const best = hourly.reduce((a,b)=>b.adValueScore>a.adValueScore?b:a);
+    document.getElementById('kpi-bestslot').textContent       = best.label;
+    document.getElementById('kpi-bestslot-score').textContent = `Score pub: ${best.adValueScore}`;
+  }
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+// RENDER HEATMAP
+// ════════════════════════════════════════════════════════════════════════════
+function renderHeatmap(hourly) {
+  const wrap = document.getElementById('heatmap-wrap');
+  if(!hourly||!hourly.length){ wrap.innerHTML='<div class="loading">Aucune donnée</div>'; return; }
+
+  // Find max per age group for colour normalisation
+  const maxPerGroup = {};
+  AGE_GROUPS.forEach(g=>{
+    maxPerGroup[g] = Math.max(...hourly.map(h=>h.groups[g]||0), 1);
+  });
+
+  let html = '<div class="heatmap">';
+  // Top-left empty cell
+  html += '<div class="hm-header"></div>';
+  hourly.forEach(h=>{
+    const even = h.hour%2===0;
+    html += `<div class="hm-header" style="${even?'':'opacity:.4'}">${h.label.slice(0,2)}h</div>`;
+  });
+
+  AGE_GROUPS.forEach((g,gi)=>{
+    html += `<div class="hm-label">${g}</div>`;
+    hourly.forEach(h=>{
+      const v = h.groups[g]||0;
+      const intensity = maxPerGroup[g]>0 ? v/maxPerGroup[g] : 0;
+      // Colour: purple → cyan gradient based on intensity
+      const r = Math.round(108  + (0   - 108)  * intensity);
+      const gv= Math.round(60   + (212 - 60)   * intensity);
+      const b = Math.round(255  + (255 - 255)   * intensity);
+      const alpha = 0.08 + intensity * 0.85;
+      const bg = `rgba(${r},${gv},${b},${alpha})`;
+      html += `<div class="hm-cell" style="background:${bg}"
+                title="${g} • ${h.label} • ${v} spectateurs"
+                >${v>0?v:''}</div>`;
+    });
+  });
+  html += '</div>';
+  wrap.innerHTML = html;
+
+  // Recommendations box
+  const top3 = [...hourly].sort((a,b)=>b.adValueScore-a.adValueScore).slice(0,3);
+  const recoBox = document.getElementById('reco-box');
+  recoBox.innerHTML = `
+    <div class="reco-box">
+      <div class="reco-title">💡 Recommandations Achat Espace Publicitaire</div>
+      ${top3.map((slot,i)=>{
+        const topAge = AGE_GROUPS.reduce((best,g)=>
+          (slot.groups[g]||0)>(slot.groups[best]||0)?g:best, AGE_GROUPS[0]);
+        return `<div class="reco-item">
+          Créneau <strong>${slot.label}</strong> — Score ${slot.adValueScore} —
+          Audience dominante : <strong>${topAge}</strong>
+          (${slot.totalViewers} spectateurs engagés, taux engagement ${slot.engagementScore}%)
+        </div>`;
+      }).join('')}
+    </div>`;
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+// RENDER AD SCORE TABLE
+// ════════════════════════════════════════════════════════════════════════════
+function renderAdScoreTable(hourly) {
+  const wrap = document.getElementById('ad-score-table-wrap');
+  if(!hourly||!hourly.length){ wrap.innerHTML='<div class="loading">Aucune donnée</div>'; return; }
+
+  const maxScore = Math.max(...hourly.map(h=>h.adValueScore), 1);
+  const top10    = [...hourly].filter(h=>h.totalViewers>0)
+    .sort((a,b)=>b.adValueScore-a.adValueScore).slice(0,10);
+
+  let html = `
+    <table class="ad-score-table">
+      <thead><tr>
+        <th>Heure</th><th>Score Pub</th><th>Spectateurs</th><th>Engagement</th><th>Âge dominant</th>
+      </tr></thead><tbody>`;
+  top10.forEach(h=>{
+    const topAge = AGE_GROUPS.reduce((best,g)=>
+      (h.groups[g]||0)>(h.groups[best]||0)?g:best, AGE_GROUPS[0]);
+    const barW = Math.round((h.adValueScore/maxScore)*100);
+    html += `<tr>
+      <td><strong>${h.label}</strong></td>
+      <td>
+        <div class="score-bar-wrap">
+          <div class="score-bar-bg"><div class="score-bar" style="width:${barW}%"></div></div>
+          <span style="font-size:11px;font-weight:700;color:var(--purple2);width:32px">${h.adValueScore}</span>
+        </div>
+      </td>
+      <td style="color:var(--text)">${h.totalViewers}</td>
+      <td>
+        <span style="color:${h.engagementScore>60?'var(--green)':h.engagementScore>30?'var(--amber)':'var(--red)'};font-weight:700">
+          ${h.engagementScore}%
+        </span>
+      </td>
+      <td style="color:var(--purple2);font-weight:700">${topAge}</td>
+    </tr>`;
+  });
+  html += '</tbody></table>';
+  wrap.innerHTML = html;
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+// RENDER GEO BUBBLES
+// ════════════════════════════════════════════════════════════════════════════
+function renderGeo(geo) {
+  const container = document.getElementById('geo-map');
+  if(!geo||!geo.length){ container.innerHTML='<div class="loading">Aucune donnée géo</div>'; return; }
+
+  const maxCount = Math.max(...geo.map(g=>g.count), 1);
+  let html = '<div style="position:relative;width:100%;height:100%"><span class="geo-title">🇹🇳 TUNISIE — Audience par Gouvernorat</span>';
+
+  geo.forEach(({city, count, correctRate}) => {
+    const pos  = CITY_POS[city];
+    if(!pos) return;
+    const size = Math.round(24 + (count/maxCount)*52); // 24px–76px
+    const left = pos.x - size/2/3;   // rough centering
+    const top  = pos.y - size/2/2.5;
+    html += `
+      <div class="geo-bubble"
+           style="left:${pos.x}%;top:${pos.y}%;width:${size}px;height:${size}px;
+                  transform:translate(-50%,-50%);
+                  opacity:${0.5+count/maxCount*0.5}"
+           title="${city}: ${count} réponses, ${correctRate}% correct">
+        <span>${city}</span>
+        <small>${count}</small>
+      </div>`;
+  });
+  html += '</div>';
+  container.innerHTML = html;
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+// RENDER CHANNEL DEMOGRAPHICS LIST
+// ════════════════════════════════════════════════════════════════════════════
+function renderChannelDemoList(channels) {
+  const el = document.getElementById('channel-demo-list');
+  if(!channels||!channels.length){ el.innerHTML='<div class="loading">Aucune donnée</div>'; return; }
+
+  el.innerHTML = channels.slice(0,6).map(ch=>{
+    const initial = ch.name.charAt(0).toUpperCase();
+    const typeLabel = ch.type==='TV'?'📺':'📻';
+    return `
+    <div class="channel-item">
+      <div class="channel-icon">${initial}</div>
+      <div class="channel-info">
+        <div class="channel-name">${typeLabel} ${ch.name}</div>
+        <div class="channel-meta">
+          Audience dominante : <strong style="color:var(--purple2)">${ch.dominantAge}</strong>
+          — ${ch.totalAnswers.toLocaleString()} interactions
+        </div>
+        <div style="margin-top:6px;display:flex;align-items:center;gap:8px">
+          <div class="gender-bar">
+            <div class="gender-fill" style="width:${ch.malePct}%;background:linear-gradient(90deg,var(--purple),var(--cyan))"></div>
+          </div>
+          <span style="font-size:10px;color:var(--muted)">
+            H ${ch.malePct}% / F ${ch.femalePct}%
+          </span>
+        </div>
+      </div>
+      <div class="channel-stats">
+        <div class="channel-stat" style="color:var(--green)">
+          ${ch.totalAnswers.toLocaleString()}
+          <small>réponses</small>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+// RENDER CHANNEL AGE CHART (stacked bar)
+// ════════════════════════════════════════════════════════════════════════════
+function renderChannelAgeChart(channels) {
+  destroyChart('channelAge');
+  const canvas = document.getElementById('channelAgeChart');
+  if(!channels||!channels.length) return;
+
+  const labels = channels.slice(0,5).map(c=>c.name.replace('El ','').replace(' Ettounsi','').replace('Watania ','W'));
+  const datasets = AGE_GROUPS.map((g,i)=>({
+    label: g,
+    data: channels.slice(0,5).map(c=>c.ageGroups[g]||0),
+    backgroundColor: AGE_COLORS[i]+'cc',
+    borderRadius: 4,
+    borderSkipped: false,
+  }));
+
+  charts['channelAge'] = new Chart(canvas, {
+    type: 'bar',
+    data: { labels, datasets },
+    options: {
+      responsive: true,
+      plugins: { legend:{ position:'bottom', labels:{ color:'#7b82a8', font:{size:10} } } },
+      scales: {
+        x: { stacked:true, ticks:{color:'#7b82a8',font:{size:10}}, grid:{color:'#1e2440'} },
+        y: { stacked:true, ticks:{color:'#7b82a8',font:{size:10}}, grid:{color:'#1e2440'} },
+      },
+    }
+  });
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+// RENDER GENDER PIE
+// ════════════════════════════════════════════════════════════════════════════
+function renderGenderChart(demo) {
+  destroyChart('gender');
+  const canvas = document.getElementById('genderChart');
+  const legend = document.getElementById('gender-legend');
+  if(!demo||!demo.gender||!demo.gender.length) return;
+
+  const total = demo.gender.reduce((s,r)=>s+r.count,0)||1;
+  charts['gender'] = new Chart(canvas, {
+    type: 'doughnut',
+    data: {
+      labels: demo.gender.map(r=>GENDER_LABELS[r.gender]||r.gender),
+      datasets:[{ data: demo.gender.map(r=>r.count),
+        backgroundColor: demo.gender.map(r=>GENDER_COLORS[r.gender]||'#7b82a8'),
+        borderWidth:0, hoverOffset:6 }]
+    },
+    options: { responsive:true, cutout:'68%', plugins:{ legend:{display:false} } }
+  });
+  legend.innerHTML = demo.gender.map(r=>`
+    <div class="pie-legend-item">
+      <div class="pie-dot" style="background:${GENDER_COLORS[r.gender]||'#7b82a8'}"></div>
+      <div class="pie-legend-label">${GENDER_LABELS[r.gender]||r.gender}</div>
+      <div class="pie-legend-val">${Math.round(r.count/total*100)}%</div>
+    </div>`).join('');
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+// RENDER AGE BAR
+// ════════════════════════════════════════════════════════════════════════════
+function renderAgeChart(demo) {
+  destroyChart('age');
+  const canvas = document.getElementById('ageChart');
+  if(!demo||!demo.ageGroups||!demo.ageGroups.length) return;
+
+  const ORDER = ['أقل من 18','18–24','25–34','35–44','45–54','55+'];
+  const sorted = ORDER.map(g=>demo.ageGroups.find(r=>r.group===g)||{group:g,count:0});
+
+  charts['age'] = new Chart(canvas, {
+    type: 'bar',
+    data: {
+      labels: sorted.map(r=>r.group),
+      datasets:[{
+        data: sorted.map(r=>r.count),
+        backgroundColor: AGE_COLORS,
+        borderRadius: 8,
+        borderSkipped: false,
+      }]
+    },
+    options: {
+      responsive:true, indexAxis:'y',
+      plugins:{ legend:{display:false} },
+      scales:{
+        x:{ ticks:{color:'#7b82a8',font:{size:10}}, grid:{color:'#1e2440'} },
+        y:{ ticks:{color:'#7b82a8',font:{size:10}}, grid:{display:false} },
+      }
+    }
+  });
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+// RENDER DEVICE OS DONUT
+// ════════════════════════════════════════════════════════════════════════════
+function renderDeviceChart(devices) {
+  destroyChart('device');
+  const canvas = document.getElementById('deviceChart');
+  const legend = document.getElementById('device-legend');
+  if(!devices||!devices.length) return;
+
+  const total = devices.reduce((s,d)=>s+d.count,0)||1;
+  charts['device'] = new Chart(canvas, {
+    type: 'doughnut',
+    data: {
+      labels: devices.map(d=>d.os),
+      datasets:[{
+        data: devices.map(d=>d.count),
+        backgroundColor: devices.map(d=>OS_COLORS[d.os]||'#7b82a8'),
+        borderWidth:0, hoverOffset:6
+      }]
+    },
+    options:{ responsive:true, cutout:'68%', plugins:{legend:{display:false}} }
+  });
+  legend.innerHTML = devices.map(d=>`
+    <div class="pie-legend-item">
+      <div class="pie-dot" style="background:${OS_COLORS[d.os]||'#7b82a8'}"></div>
+      <div class="pie-legend-label">${d.os}</div>
+      <div class="pie-legend-val">${Math.round(d.count/total*100)}%</div>
+    </div>`).join('');
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+// RENDER TIMELINE
+// ════════════════════════════════════════════════════════════════════════════
+function renderTimeline(data) {
+  destroyChart('timeline');
+  const canvas = document.getElementById('timelineChart');
+  if(!data||!data.length) return;
+
+  const labels = data.map(d=>{
+    const h = new Date(d.hour);
+    return `${String(h.getHours()).padStart(2,'0')}:00`;
+  });
+  charts['timeline'] = new Chart(canvas, {
+    type: 'line',
+    data: {
+      labels,
+      datasets:[
+        { label:'Réponses', data: data.map(d=>d.answers),
+          borderColor:'#6c3cff', backgroundColor:'rgba(108,60,255,.08)',
+          tension:.4, fill:true, pointRadius:3, pointHoverRadius:6,
+          yAxisID:'y' },
+        { label:'Bonnes réponses', data: data.map(d=>d.correct),
+          borderColor:'#22d37a', backgroundColor:'rgba(34,211,122,.06)',
+          tension:.4, fill:true, pointRadius:3, pointHoverRadius:6,
+          yAxisID:'y' },
+        { label:'% succès', data: data.map(d=>d.answers>0?Math.round(d.correct/d.answers*100):0),
+          borderColor:'#f5a623', backgroundColor:'transparent',
+          tension:.4, borderDash:[4,4], pointRadius:2,
+          yAxisID:'y2' },
+      ]
+    },
+    options:{
+      responsive:true,
+      interaction:{ mode:'index', intersect:false },
+      plugins:{ legend:{ labels:{ color:'#7b82a8', font:{size:11} } } },
+      scales:{
+        x: { ticks:{color:'#7b82a8',font:{size:10},maxRotation:0}, grid:{color:'#1e2440'} },
+        y: { ticks:{color:'#7b82a8',font:{size:10}}, grid:{color:'#1e2440'}, position:'left' },
+        y2:{ ticks:{color:'#f5a623',font:{size:10},callback:v=>v+'%'},
+             grid:{display:false}, position:'right', min:0, max:100 },
+      }
+    }
+  });
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+// MAIN LOAD
+// ════════════════════════════════════════════════════════════════════════════
+async function loadAll() {
+  const [overview, hourly, demo, devices, channelDemo, geo, timeline] = await Promise.all([
+    api('/overview',            demoOverview),
+    api('/audience-by-hour',    demoAudienceByHour),
+    api('/demographics',        demoDemographics),
+    api('/devices',             demoDevices),
+    api('/channel-demographics',demoChannelDemographics),
+    api('/geo',                 demoGeo),
+    api('/timeline',            demoTimeline),
+  ]);
+
+  renderKPIs(overview, hourly);
+  renderHeatmap(hourly);
+  renderAdScoreTable(hourly);
+  renderGeo(geo);
+  renderChannelDemoList(channelDemo);
+  renderChannelAgeChart(channelDemo);
+  renderGenderChart(demo);
+  renderAgeChart(demo);
+  renderDeviceChart(devices);
+  renderTimeline(timeline);
+
+  // Update refresh timestamp
+  document.getElementById('last-refresh').textContent =
+    'Mis à jour: ' + new Date().toLocaleTimeString('fr-TN');
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+// AUTO-REFRESH COUNTDOWN
+// ════════════════════════════════════════════════════════════════════════════
+let remaining = REFRESH_S;
+setInterval(()=>{
+  remaining--;
+  document.getElementById('countdown').textContent = remaining;
+  if(remaining <= 0){ remaining = REFRESH_S; loadAll(); }
+}, 1000);
+
+// ════════════════════════════════════════════════════════════════════════════
+// CHART.JS GLOBAL DEFAULTS
+// ════════════════════════════════════════════════════════════════════════════
+Chart.defaults.color = '#7b82a8';
+Chart.defaults.borderColor = '#1e2440';
+Chart.defaults.font.family = "'Segoe UI', system-ui, sans-serif";
+
+// BOOT
+loadAll();
+</script>
+</body>
+</html>
