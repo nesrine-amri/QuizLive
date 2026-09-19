@@ -266,6 +266,26 @@ Jouer ne demande qu'un compte léger (email/mot de passe) pour suivre les points
 
 ---
 
+## Team
+
+Built by a 3-person team during the hackathon:
+
+| Member | Contribution |
+|---|---|
+| [Nesrine Amri](https://github.com/nesrine-amri) | AI/ML pipeline — live audio capture, Whisper transcription, Groq quiz generation, YOLOv8/OCR computer-vision prototypes (`api/`, `agent/`, `cv-worker/`) |
+| [Aabchoun](https://github.com/Aabchoun) | DABLyou platform — NestJS backend & Flutter mobile app |
+| Mariem | DABLyou platform — NestJS backend & Flutter mobile app |
+
+Équipe de 3 personnes pendant le hackathon :
+
+| Membre | Contribution |
+|---|---|
+| [Nesrine Amri](https://github.com/nesrine-amri) | Pipeline IA/ML — capture audio live, transcription Whisper, génération de quiz via Groq, prototypes computer-vision YOLOv8/OCR (`api/`, `agent/`, `cv-worker/`) |
+| [Aabchoun](https://github.com/Aabchoun) | Plateforme DABLyou — backend NestJS & application Flutter |
+| Mariem | Plateforme DABLyou — backend NestJS & application Flutter |
+
+---
+
 ## Hackathon
 
 Built during a hackathon organized by **3SG Group**, in collaboration with **ENIT Junior Entreprise**.
